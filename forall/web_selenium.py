@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from .exceptions import *
 
 class selenium_client():
-    def __init__(self, proxy, headless=True):
+    def __init__(self, proxy=None, headless=True):
         self.chrome_options = wire.ChromeOptions()
         if headless == True:
             self.chrome_options.add_argument('--headless')
@@ -16,9 +16,7 @@ class selenium_client():
         self.chrome_options.add_argument("--window-size=1920,1080")
         self.chrome_options.add_experimental_option("detach", True)
 
-        self.proxy_type = proxy.replace("//", '').split('@')[0].split(':')[0]
-
-        if self.proxy_type != 'no_proxy':
+        if proxy != None:
             self.proxy_options = {
                 'proxy': {
                     'https': proxy,
