@@ -5,7 +5,7 @@ import time
 
 url_page = 'https://auto.ru/'
 
-def total_count(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, headless=True):
+def total_count(proxy, headless=True):
     """
     AUTORU. Ф-ция для полчения числа обьявлений по России
 
@@ -21,10 +21,7 @@ def total_count(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
     error = None
     error_message = None
 
-    client = selenium_client(proxy_id=proxy_id, proxy_ip=proxy_ip, proxy_port=proxy_port,
-                             proxy_login=proxy_login, proxy_pwd=proxy_pwd,
-                             proxy_type=proxy_type, headless=headless
-                             )
+    client = selenium_client(proxy, headless=headless)
     try:
         client.open_url(url_page)
         client.check_network_trouble()
@@ -32,14 +29,10 @@ def total_count(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
         if region != 'Любой регион':
             f_el = client.client.find_element_by_xpath("//span[@class='GeoSelect__title-shrinker']")
             client.client.execute_script("arguments[0].click();", f_el)
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//div[@class='GeoSelectPopup__regions']/button")
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//span[contains(text(), 'Сохранить') and @class='Button__text']")
-            time.sleep(0.5)
-        time.sleep(3)
         description = BeautifulSoup(client.client.page_source).find('span', {'class': 'IndexSelector__exclusive-text'}).get_text()
         total = int("".join(description.split(',')[0].split('\xa0')[0:2]))
     except NetworkTrouble as err:
@@ -51,6 +44,8 @@ def total_count(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
         error_message = err
         total = None
 
+    client.quit_browser()
+
     return {
         'data': {
             'total': total
@@ -59,7 +54,7 @@ def total_count(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
         'error_message': error_message
     }
 
-def marks(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, headless=True):
+def marks(proxy, headless=True):
     """
         AUTORU. Ф-ция для получения числа обьявлений по каждой марке
 
@@ -77,10 +72,7 @@ def marks(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, he
 
     list_mark_dict = []
 
-    client = selenium_client(proxy_id=proxy_id, proxy_ip=proxy_ip, proxy_port=proxy_port,
-                             proxy_login=proxy_login, proxy_pwd=proxy_pwd,
-                             proxy_type=proxy_type, headless=headless
-                             )
+    client = selenium_client(proxy, headless=headless)
     try:
         client.open_url(url_page)
         client.check_network_trouble()
@@ -88,15 +80,11 @@ def marks(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, he
         if region != 'Любой регион':
             f_el = client.client.find_element_by_xpath("//span[@class='GeoSelect__title-shrinker']")
             client.client.execute_script("arguments[0].click();", f_el)
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//div[@class='GeoSelectPopup__regions']/button")
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//span[contains(text(), 'Сохранить') and @class='Button__text']")
-            time.sleep(0.5)
         client.XpathFindAndClick("//div[@class='IndexMarks__show-all-icon']")
-        time.sleep(0.5)
         list_marks = BeautifulSoup(client.client.page_source).find('div', {'class': 'IndexMarks__marks-with-counts'}).find_all('a', {'class': 'IndexMarks__item'})
         for one_description_mark in list_marks:
             name_mark = one_description_mark.find('div', {'class': 'IndexMarks__item-name'}).get_text()
@@ -116,13 +104,15 @@ def marks(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, he
         error = 'unknown'
         error_message = err
 
+    client.quit_browser()
+
     return {
         'data': list_mark_dict,
         'error': error,
         'error_message': error_message
     }
 
-def mark_models(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, mark_model_url, headless=True):
+def mark_models(proxy, mark_model_url, headless=True):
     """
         AUTORU. Ф-ция для получения числа обьявлений по каждой модели у данной марки
 
@@ -141,10 +131,7 @@ def mark_models(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
 
     list_mark_model_dict = []
 
-    client = selenium_client(proxy_id=proxy_id, proxy_ip=proxy_ip, proxy_port=proxy_port,
-                             proxy_login=proxy_login, proxy_pwd=proxy_pwd,
-                             proxy_type=proxy_type, headless=headless
-                             )
+    client = selenium_client(proxy, headless=headless)
     try:
         client.open_url(mark_model_url)
         client.check_network_trouble()
@@ -152,16 +139,12 @@ def mark_models(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
         if region != 'Любой регион':
             f_el = client.client.find_element_by_xpath("//span[@class='GeoSelect__title-shrinker']")
             client.client.execute_script("arguments[0].click();", f_el)
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//div[@class='GeoSelectPopup__regions']/button")
-            time.sleep(0.5)
 
             client.XpathFindAndClick("//span[contains(text(), 'Сохранить') and @class='Button__text']")
-            time.sleep(0.5)
         if BeautifulSoup(client.client.page_source).find('span', {'class': 'Link ListingPopularMMM-module__expandLink'}).get_text().find('Нет в продаже') == -1:
             client.XpathFindAndClick("//span[@class='Link ListingPopularMMM-module__expandLink']")  # если много моделей
-            time.sleep(0.5)
         list_models = BeautifulSoup(client.client.page_source).find('div', {'class': 'ListingPopularMMM-module__container PageListing-module__popularMMM'}).find_all('div', {'class': 'ListingPopularMMM-module__item'})
         for one_description_model in list_models:
             name_model = one_description_model.find('a').get_text()
@@ -180,6 +163,8 @@ def mark_models(proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_ty
     except Exception as err:
         error = 'unknown'
         error_message = err
+
+    client.quit_browser()
 
     return {
         'data': list_mark_model_dict,

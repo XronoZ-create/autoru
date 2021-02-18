@@ -1,9 +1,12 @@
 from .selenium_wire import webdriver as wire
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
 from .exceptions import *
 
 class selenium_client():
-    def __init__(self, proxy_id, proxy_ip, proxy_port, proxy_login, proxy_pwd, proxy_type, headless=True):
+    def __init__(self, proxy, headless=True):
         self.chrome_options = wire.ChromeOptions()
         if headless == True:
             self.chrome_options.add_argument('--headless')
@@ -13,10 +16,12 @@ class selenium_client():
         self.chrome_options.add_argument("--window-size=1920,1080")
         self.chrome_options.add_experimental_option("detach", True)
 
-        if proxy_type != 'no_proxy':
+        self.proxy_type = proxy.replace("//", '').split('@')[0].split(':')[0]
+
+        if self.proxy_type != 'no_proxy':
             self.proxy_options = {
                 'proxy': {
-                    'https': '%s://%s:%s@%s:%s' % (proxy_type, proxy_login, proxy_pwd, proxy_ip, proxy_port),
+                    'https': proxy,
                 }
             }
             self.client = wire.Chrome(seleniumwire_options=self.proxy_options, options=self.chrome_options)
@@ -58,9 +63,11 @@ class selenium_client():
 
     def XpathFindAndClick(self, xpath):
         try:
+            self.wait = WebDriverWait(self.client, 1)
+            self.element = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.f_el = self.client.find_element_by_xpath(xpath)
             self.f_el.click()
-        except:
+        except Exception as err:
             self.f_el = self.client.find_element_by_xpath(xpath)
             self.client.execute_script("arguments[0].click();", self.f_el)
 
